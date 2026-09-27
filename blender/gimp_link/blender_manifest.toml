@@ -1,0 +1,24 @@
+schema_version = "1.0.0"
+
+id = "gimp_link"
+version = "0.1.0"
+name = "GIMP Link"
+tagline = "Edit textures in GIMP 3 and see them back in Blender at once"
+maintainer = "David <sandquist@gmail.com>"
+type = "add-on"
+
+website = "https://github.com/sandbranch/gimp-blender-link"
+
+tags = ["Paint", "Import-Export"]
+
+blender_version_min = "4.2.0"
+
+license = ["SPDX:GPL-3.0-or-later"]
+copyright = ["2026 David"]
+
+[permissions]
+files = "Read and write textures and the GIMP Link exchange files"
+network = "Talk to the GIMP plug-in on 127.0.0.1 (this computer only)"
+
+[build]
+paths_exclude_pattern = ["__pycache__/", "*.pyc"]
