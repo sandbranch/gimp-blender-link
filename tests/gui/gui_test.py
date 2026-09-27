@@ -9,6 +9,7 @@
 # 4. send over the socket: the texture is written, Blender is told.
 # 5. Send to Blender from GIMP's own menu (File > Blender Link), as a
 #    user would run it.
+# 6. The Options dialog opens from the menu and closes with Cancel.
 #
 # Needs the manifests of a Blender export (tests/gui/gui-test.sh makes
 # them). Stops the GIMP and the Chrome it started, and nothing else.
@@ -225,6 +226,27 @@ try:
     cdp(view, "wait:500", "shot:%s" % os.path.join(out, "4-after-send.png"))
     st = status()
     check("image not dirty after sending (XCF saved)", st and not st[0]["dirty"], st)
+
+    # the Options dialog (GimpUi): File > Blender Link > Options, then Cancel
+    count = "eval:Object.values(surfaces).filter(s => s.visible !== false && s.width > 200).length"
+    rc0, n0 = cdp(view, count)
+    rc, text = cdp(view, "click:45,72", "wait:1000", "key:Up", "wait:400", "key:Right", "wait:800", "key:o",
+                   "wait:4000", count, "shot:%s" % os.path.join(out, "5-options.png"))
+    n1 = text.splitlines()[-1] if text else ""
+    check("Options dialog opens", rc == 0 and n1.isdigit() and n0.isdigit() and int(n1) > int(n0), (n0, text))
+    # Cancel: on Broadway the dialog has no keyboard focus, so it is
+    # clicked, at its place in the dialog's own window (the topmost one)
+    rc, at = cdp(view, "eval:(() => { const s = Object.values(surfaces).filter(s => s.width > 200)"
+                 ".sort((a, b) => (Number(b.canvas.style.zIndex) || 0) - (Number(a.canvas.style.zIndex) || 0))[0];"
+                 " return s.x + ',' + s.y })()")
+    try:
+        dx, dy = (int(v) for v in at.splitlines()[-1].split(","))
+        cdp(view, "click:%d,%d" % (dx + 278, dy + 204), "wait:1500")  # 26, 23: the window shadow
+    except ValueError:
+        pass
+    rc, n2 = cdp(view, count)
+    check("Options dialog closes with Cancel", n2 == n0, (n0, n2, at))
+    check("GIMP still answers after the dialog", bool(status()))
 except Exception as e:
     import traceback
     traceback.print_exc()

@@ -164,6 +164,12 @@ blender "$run/linkdir" "$(free_port)" "$here/blender_export.py" "$run/work" >"$r
 report "$run/blender-export.log" "BLENDER EXPORT"
 
 echo "== GIMP: build and send"
+# the plug-in installed in the throwaway profile, for its procedures
+cplug=$out/profile-console/plug-ins/gimp-blender-link
+mkdir -p "$cplug"
+rm -f "$cplug"/*.py
+cp "$src"/gimp/gimp-blender-link/*.py "$cplug/"
+chmod +x "$cplug/gimp-blender-link.py"
 gimp_console "$out/profile-console" "$run/linkdir" "$(free_port)" \
   -b "exec(open('$here/gimp_build_send.py').read())" >"$run/gimp.log" 2>&1
 report "$run/gimp.log" "GIMP BUILD SEND"

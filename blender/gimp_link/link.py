@@ -286,6 +286,19 @@ def refresh_manifests():
 
 # ---------------------------------------------------------------- GIMP
 
+_listener_cache = [0.0, None]
+
+
+def gimp_listening():
+    """Whether GIMP's listener file is there (checked at most every 2 s,
+    for the panel, which redraws often)."""
+    now = time.monotonic()
+    if now - _listener_cache[0] > 2.0:
+        _listener_cache[0] = now
+        _listener_cache[1] = proto.read_listener() is not None
+    return _listener_cache[1]
+
+
 def gimp_request(msg, timeout=3.0):
     info = proto.read_listener()
     if info is None:

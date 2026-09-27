@@ -283,10 +283,12 @@ class BlenderLink(Gimp.PlugIn):
             if run_mode == Gimp.RunMode.INTERACTIVE:
                 Gimp.message("This image is not linked to Blender.")
             return procedure.new_return_values(Gimp.PDBStatusType.CANCEL, GLib.Error())
-        opts = info.get("options") or {}
-        config.set_property("dilation", int(opts.get("dilation", -1)))
-        config.set_property("save-xcf", bool(opts.get("save_xcf", True)))
         if run_mode == Gimp.RunMode.INTERACTIVE:
+            # the dialog starts from this image's options; called from a
+            # script, the arguments are the options
+            opts = info.get("options") or {}
+            config.set_property("dilation", int(opts.get("dilation", -1)))
+            config.set_property("save-xcf", bool(opts.get("save_xcf", True)))
             gi.require_version("GimpUi", "3.0")
             from gi.repository import GimpUi
             GimpUi.init("gimp-blender-link")

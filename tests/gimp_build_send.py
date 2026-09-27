@@ -281,6 +281,40 @@ check("seam bleed steps cover every distance", all(
     for n in range(0, 65)))
 print("INFO seam bleed send took %.2f s" % dt)
 
+# ---------------------------------------------------------------- the plug-in's procedures
+pdb = Gimp.get_pdb()
+popt = pdb.lookup_procedure("plug-in-gimp-blender-link-options")
+psend = pdb.lookup_procedure("plug-in-gimp-blender-link-send")
+
+
+def run(proc, image, **props):
+    cfg = proc.create_config()
+    cfg.set_property("run-mode", Gimp.RunMode.NONINTERACTIVE)
+    cfg.set_property("image", image)
+    cfg.set_core_object_array("drawables", image.get_selected_layers())
+    for k, v in props.items():
+        cfg.set_property(k.replace("_", "-"), v)
+    return proc.run(cfg).index(0)
+
+
+if check("plug-in procedures registered", popt is not None and psend is not None):
+    st = run(popt, img3, dilation=2, save_xcf=False)
+    opts = gbl_gimp.read_link(img3).get("options")
+    check("Options procedure stores the image's options", st == Gimp.PDBStatusType.SUCCESS
+          and opts == {"dilation": 2, "save_xcf": False}, (st, opts))
+    img3.clean_all()
+    before = gbl_png.read(m["tiles"][0]["texture"])
+    st = run(psend, img3, dilation=-1)
+    after = gbl_png.read(m["tiles"][0]["texture"])
+    x0, y0, x1, y1 = island_rect(0)
+    check("Send procedure uses the image's seam bleed (2 px)", st == Gimp.PDBStatusType.SUCCESS
+          and gbl_png.sample(after, x0 - 1, y0 + 9) == gbl_png.sample(after, x0, y0 + 9)
+          and gbl_png.sample(after, x0 - 2, y0 + 9) == gbl_png.sample(after, x0, y0 + 9)
+          and gbl_png.sample(after, x0 - 3, y0 + 9) == gbl_png.sample(before, x0 - 3, y0 + 9),
+          (st, [gbl_png.sample(after, x, y0 + 9) for x in range(x0 - 3, x0 + 1)]))
+    st = run(psend, Gimp.Image.new(8, 8, Gimp.ImageBaseType.RGB))
+    check("Send procedure fails on an unlinked image", st == Gimp.PDBStatusType.EXECUTION_ERROR, st)
+
 # ---------------------------------------------------------------- bad input
 try:
     gbl_gimp.send(Gimp.Image.new(8, 8, Gimp.ImageBaseType.RGB))

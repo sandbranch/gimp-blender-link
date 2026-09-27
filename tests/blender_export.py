@@ -164,6 +164,69 @@ except Exception as e:
     traceback.print_exc()
     T.check("UDIM export", False, e)
 
+# the panel's drawing code and how the target image is found, with a
+# stand-in layout (background Blender has no windows to draw in)
+
+
+class Layout:
+    def __init__(self):
+        self.calls = []
+
+    def __getattr__(self, name):
+        if name in ("column", "row", "box"):
+            return lambda *a, **k: self
+        if name in ("label", "operator", "prop", "separator"):
+            return lambda *a, **k: self.calls.append((name, a, k))
+        raise AttributeError(name)
+
+    def __setattr__(self, name, value):
+        object.__setattr__(self, name, value)
+
+
+class Space:
+    type = "IMAGE_EDITOR"
+
+    def __init__(self, image):
+        self.image = image
+
+
+class Ctx:
+    def __init__(self, image=None):
+        self.space_data = Space(image) if image is not None else None
+        self.active_object = cube
+        self.scene = bpy.context.scene
+        self.mode = "PAINT_TEXTURE"
+
+
+try:
+    lay = Layout()
+    gimp_link.draw_panel(lay, Ctx(albedo))
+    ops = [c[1][0] for c in lay.calls if c[0] == "operator"]
+    T.check("panel draws for a linked image", "gimplink.edit_in_gimp" in ops and "gimplink.pull_from_gimp" in ops
+            and "gimplink.update_uvs" in ops, ops)
+    fresh_img = bpy.data.images.new("unlinked", 8, 8)
+    lay = Layout()
+    gimp_link.draw_panel(lay, Ctx(fresh_img))
+    ops = [c[1][0] for c in lay.calls if c[0] == "operator"]
+    T.check("panel draws for an unlinked image", ops == ["gimplink.edit_in_gimp"], ops)
+    albedo.gimplink.conflict = True
+    lay = Layout()
+    gimp_link.draw_panel(lay, Ctx(albedo))
+    T.check("panel shows a conflict", any(c[0] == "label" and c[2].get("text") == "Changed on disk"
+                                          for c in lay.calls))
+    albedo.gimplink.conflict = False
+    T.check("target image: the Image Editor's image", gimp_link.target_image(Ctx(data)) == data)
+    ts = bpy.context.scene.tool_settings.image_paint
+    ts.mode = "IMAGE"
+    ts.canvas = file8
+    T.check("target image: the texture paint canvas", gimp_link.target_image(Ctx()) == file8)
+    ts.mode = "MATERIAL"
+    T.check("target image: the material's paint slot", gimp_link.target_image(Ctx()) in (albedo, data, file8, normal8))
+except Exception as e:
+    import traceback
+    traceback.print_exc()
+    T.check("panel and target image", False, e)
+
 bpy.ops.wm.save_mainfile()
 T.done()
 gimp_link.unregister()

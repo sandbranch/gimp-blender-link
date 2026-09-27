@@ -23,7 +23,7 @@ bl_info = {
     "category": "Paint",
 }
 
-import os
+import time
 
 import bpy
 from bpy.app.handlers import persistent
@@ -236,11 +236,10 @@ def draw_panel(layout, context):
     box.label(text="Editing the file in place" if g.mode == "in-place" else "Exchange copy")
     t = link.State.last_reload.get(g.link_id)
     if t:
-        import time
         box.label(text="Reloaded %s" % time.strftime("%H:%M:%S", time.localtime(t)))
     if link.State.notices:
         box.label(text="GIMP: " + link.State.notices[-1][2])
-    if proto.read_listener() is None:
+    if not link.gimp_listening():
         box.label(text="GIMP is not listening", icon="INFO")
 
 
