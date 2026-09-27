@@ -200,6 +200,13 @@ Blender.
 Details in [docs/design.md](docs/design.md); what it learned from the
 other links in [docs/prior-art.md](docs/prior-art.md).
 
+Another GIMP 3 link appeared after this one was designed:
+[BlendGimp](https://github.com/ALS-Sanbox/BlendGimp) (first commit
+2026-08-31, GPL-3.0-or-later per its manifest), which lets you paint in
+Blender's viewport while GIMP holds the pixels and layers, over a
+connection on your own machine. It works the other way round from GIMP Link (which
+sends the texture to GIMP to edit there); it has not been tried here.
+
 - The add-on writes the texture, `uv-1001.svg`, `islands-1001.svg`,
   `island-ids-1001.png` (16-bit, island number + 1),
   `islands-mask-1001.png` and `manifest.json`, then sends GIMP one line
