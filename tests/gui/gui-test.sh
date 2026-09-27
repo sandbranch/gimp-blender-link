@@ -7,11 +7,11 @@
 #
 # Skips (exit 0) without Chrome or node 22. Throwaway GIMP profile,
 # link folder and port; GIMP and Blender run isolated from your folders
-# (gimp-plugin-devtools/gimp-run.sh: HOME and the XDG folders in a
+# (gimp-devtools/gimp-run.sh: HOME and the XDG folders in a
 # throwaway home, so no recent-file entries, thumbnails or GIO metadata
 # in the Flatpaks' own folders); stops only the GIMP and Chrome it
 # started.
-# Needs ../gimp-plugin-devtools (or GIMP_PLUGIN_DEVTOOLS) for cdp.mjs.
+# Needs ../gimp-devtools (or GIMP_PLUGIN_DEVTOOLS) for cdp.mjs.
 #
 # Copyright 2026 David
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -19,7 +19,7 @@ here=$(cd "$(dirname "$0")" && pwd)
 tests=$(dirname "$here")
 src=$(dirname "$tests")
 out=$tests/output/gui
-devtools=${GIMP_PLUGIN_DEVTOOLS:-$src/../gimp-plugin-devtools}
+devtools=${GIMP_PLUGIN_DEVTOOLS:-$src/../gimp-devtools}
 
 command -v google-chrome >/dev/null || command -v chromium >/dev/null ||
   command -v chromium-browser >/dev/null || { echo "GUI SKIP: no Chrome or Chromium"; exit 0; }

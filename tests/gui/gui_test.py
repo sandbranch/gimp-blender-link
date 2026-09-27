@@ -1,6 +1,6 @@
 # The resident listener in a real GIMP (the Flatpak, GUI on a Broadway
 # display, looked at through a headless Chrome with
-# gimp-plugin-devtools/gui/cdp.mjs). This script plays Blender: a
+# gimp-devtools/gui/cdp.mjs). This script plays Blender: a
 # stand-in listener gets GIMP's reload messages.
 #
 # 1. GIMP starts; the listener starts by itself and answers.
@@ -38,7 +38,7 @@ work = os.environ["GUI_WORK"]
 linkdir = os.environ["GIMP_BLENDER_LINK_DIR"]
 port = int(os.environ["GIMP_BLENDER_LINK_PORT"])
 profile = os.environ["GUI_PROFILE"]
-devtools = os.environ.get("GIMP_PLUGIN_DEVTOOLS", os.path.join(src, "..", "gimp-plugin-devtools"))
+devtools = os.environ.get("GIMP_PLUGIN_DEVTOOLS", os.path.join(src, "..", "gimp-devtools"))
 cdp_js = os.path.join(devtools, "gui", "cdp.mjs")
 failures = 0
 

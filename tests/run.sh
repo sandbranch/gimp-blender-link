@@ -16,13 +16,13 @@
 # with throwaway profiles under tests/output (BLENDER_USER_CONFIG,
 # BLENDER_USER_SCRIPTS, GIMP3_DIRECTORY) and a throwaway link folder and
 # port (GIMP_BLENDER_LINK_DIR, GIMP_BLENDER_LINK_PORT), and isolated from
-# your own folders (tests/isolate.sh, with gimp-plugin-devtools/gimp-run.sh):
+# your own folders (tests/isolate.sh, with gimp-devtools/gimp-run.sh):
 # HOME and the XDG folders inside each Flatpak point into a throwaway
 # home, so that no thumbnails, recent-file entries or GIO metadata land
 # in the Flatpaks' own folders. Your own Blender, GIMP and their add-ons
 # and plug-ins are not used or changed: before and after, it lists your
 # folders of GIMP, Blender and the other apps
-# (gimp-plugin-devtools/snapshot.sh) and fails if anything there changed.
+# (gimp-devtools/snapshot.sh) and fails if anything there changed.
 #
 # Prints PASS or FAIL for each case; exits non-zero if any case fails.
 #

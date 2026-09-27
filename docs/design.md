@@ -6,7 +6,7 @@ this link sits next to Blender Krita Link and Blender Layer, so the same
 texture can go to Krita, GIMP and Blender in turn.
 
 Background: [prior-art.md](prior-art.md) and the research in
-`gimp-plugin-devtools/docs/interlinks.md`.
+`gimp-devtools/docs/interlinks.md`.
 
 ## What the user does
 

@@ -270,7 +270,7 @@ throwaway link folder and port under `tests/output/`:
   Blender over the socket, including a request left before GIMP starts;
 - GUI: the listener in a real GIMP on a Broadway display, looked at with
   a headless Chrome (needs
-  [gimp-plugin-devtools](https://github.com/sandbranch/gimp-plugin-devtools)
+  [gimp-devtools](https://github.com/sandbranch/gimp-devtools)
   next to this folder for `gui/cdp.mjs`): opening in a window, menus,
   Send to Blender from the File menu, the Options dialog.
 
