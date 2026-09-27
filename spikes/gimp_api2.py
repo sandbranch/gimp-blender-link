@@ -1,0 +1,31 @@
+import gi, os, struct
+gi.require_version("Gimp", "3.0"); gi.require_version("Gegl", "0.4")
+from gi.repository import Gimp, Gio, Gegl, GLib
+out = os.environ["SPIKE_OUT"]
+img = Gimp.Image.new_with_precision(8, 8, Gimp.ImageBaseType.RGB, Gimp.Precision.FLOAT_LINEAR)
+l = Gimp.Layer.new(img, "l", 8, 8, Gimp.ImageType.RGBA_IMAGE, 100, Gimp.LayerMode.NORMAL)
+img.insert_layer(l, None, 0)
+b = l.get_buffer(); b.set(Gegl.Rectangle.new(0,0,8,8), "RGBA float", struct.pack("<4f", 0.123456789, 0.5, 0.987654321, 1.0)*64); b.flush()
+try:
+    p = Gimp.Parasite.new("gbl-test", Gimp.PARASITE_PERSISTENT, list(b'{"a": 1}'))
+    img.attach_parasite(p); q = img.get_parasite("gbl-test"); print("PARASITE", bytes(q.get_data()), q.get_flags())
+    l.attach_parasite(Gimp.Parasite.new("gbl-h", Gimp.PARASITE_PERSISTENT, list(b"1"))); print("LAYER PARASITE", l.get_parasite("gbl-h") is not None, l.get_parasite("nope"))
+except Exception as e: print("PARASITE FAIL", repr(e))
+pe = os.path.join(out, "f.exr")
+Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, img, Gio.File.new_for_path(pe), None)
+back = Gimp.file_load(Gimp.RunMode.NONINTERACTIVE, Gio.File.new_for_path(pe))
+print("EXR float back", back.get_precision().value_nick, struct.unpack("<4f", back.get_layers()[0].get_buffer().get(Gegl.Rectangle.new(0,0,1,1),1.0,"RGBA float",Gegl.AbyssPolicy.NONE)))
+print("has get_displays", hasattr(Gimp, "get_displays"), [n for n in dir(Gimp) if "display" in n.lower()])
+print("xcf file", img.get_xcf_file(), img.get_file())
+xcf = os.path.join(out, "p.xcf"); Gimp.file_save(Gimp.RunMode.NONINTERACTIVE, img, Gio.File.new_for_path(xcf), None)
+print("after save xcf", img.get_xcf_file().get_path() if img.get_xcf_file() else None, "dirty", img.is_dirty())
+x2 = Gimp.file_load(Gimp.RunMode.NONINTERACTIVE, Gio.File.new_for_path(xcf)); print("reloaded parasite", bytes(x2.get_parasite("gbl-test").get_data()), "layer par", x2.get_layers()[0].get_parasite("gbl-h") is not None)
+d = img.duplicate(); print("dup", d.get_layers()[0].get_parasite("gbl-h") is not None)
+print("Selection", [m for m in dir(Gimp.Selection) if not m.startswith("_")][:40])
+print("layer methods", [m for m in dir(Gimp.Layer) if m in ("edit_clear","add_alpha","has_alpha","set_lock_content","copy","set_offsets","set_visible","get_visible")])
+print("img methods", [m for m in dir(Gimp.Image) if m in ("set_selected_layers","merge_visible_layers","clean_all","duplicate","delete","get_item_position","reorder_item","flatten","get_selected_layers","undo_group_start","undo_disable")])
+print("GimpUi?", end=" ")
+try:
+    gi.require_version("GimpUi", "3.0"); from gi.repository import GimpUi; print("ok", hasattr(GimpUi, "ProcedureDialog"))
+except Exception as e: print("no", e)
+print("RunMode arg", [m for m in dir(Gimp.Procedure) if m.startswith("add_") and "arg" in m][:30])

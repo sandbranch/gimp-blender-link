@@ -145,8 +145,12 @@ try:
         "--env=GIMP_BLENDER_LINK_DIR=%s" % linkdir, "--env=GIMP_BLENDER_LINK_PORT=%d" % port,
         "--env=GIMP_BLENDER_LINK_DEBUG=1",
         "--command=sh", "org.gimp.GIMP", "-c",
+        # XDG folders set in the sandbox (Flatpak ignores --env for them):
+        # no recent-file entries or thumbnails in GIMP's own folders
+        "export XDG_DATA_HOME='%s' XDG_CACHE_HOME='%s'; "
         "broadwayd --port %d %s & bw=$!; trap 'kill $bw' EXIT; sleep 5; "
-        "gimp-3.2 --new-instance --no-splash --no-fonts" % (broadway, display)],
+        "gimp-3.2 --new-instance --no-splash --no-fonts"
+        % (os.path.join(out, "xdg", "data"), os.path.join(out, "xdg", "cache"), broadway, display)],
         stdout=log, stderr=subprocess.STDOUT)
     time.sleep(2.5)
     rc, text = cdp(view, "nav:http://127.0.0.1:%d/" % broadway, "wait:500")

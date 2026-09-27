@@ -6,7 +6,9 @@
 #   tests/gui/gui-test.sh
 #
 # Skips (exit 0) without Chrome or node 22. Throwaway GIMP profile,
-# link folder and port; stops only the GIMP and Chrome it started.
+# XDG data and cache folders (no recent-file entries or thumbnails in
+# the Flatpak's own folders), link folder and port; stops only the GIMP
+# and Chrome it started.
 # Needs ../gimp-plugin-devtools (or GIMP_PLUGIN_DEVTOOLS) for cdp.mjs.
 #
 # Copyright 2026 David
@@ -43,10 +45,13 @@ grep -q show-welcome-dialog "$profile/gimprc" 2>/dev/null ||
   echo '(show-welcome-dialog no)' >>"$profile/gimprc"
 
 port=$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
+b=$out/blender
 timeout 300 flatpak run --filesystem="$src" \
-  --env=BLENDER_USER_CONFIG="$out/blender/config" --env=BLENDER_USER_SCRIPTS="$out/blender/scripts" \
+  --env=BLENDER_USER_RESOURCES="$b/res" --env=BLENDER_USER_CONFIG="$b/config" \
+  --env=BLENDER_USER_SCRIPTS="$b/scripts" --env=BLENDER_USER_EXTENSIONS="$b/ext" \
   --env=GIMP_BLENDER_LINK_DIR="$out/linkdir" --env=GIMP_BLENDER_LINK_PORT="$port" \
-  "${GBL_BLENDER_APP:-org.blender.Blender}" -b --factory-startup \
+  --command=env "${GBL_BLENDER_APP:-org.blender.Blender}" XDG_CACHE_HOME="$b/cache" XDG_DATA_HOME="$b/data" \
+  blender -b --factory-startup \
   --python "$tests/blender_export.py" -- "$out/work" >"$out/blender.log" 2>&1
 grep -q "^BLENDER EXPORT failures: 0$" "$out/blender.log" ||
   { echo "FAIL GUI: the Blender export for the GUI test failed, see $out/blender.log"; echo "GUI failures: 1"; exit 1; }
