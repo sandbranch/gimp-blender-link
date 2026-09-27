@@ -218,10 +218,13 @@ Blender; no dialog, so a shortcut makes it one key):
    exporter converts a linear image to sRGB (spike); EXR and other
    formats through GIMP's exporter, with the temporary name keeping the
    extension;
-4. save the XCF (option, on by default), update the parasite;
-5. tell Blender: `{"cmd": "reload", ...}` to the manifest's port with
+4. tell Blender: `{"cmd": "reload", ...}` to the manifest's port with
    Blender's token. If Blender does not answer, its poller finds the
-   file anyway.
+   file anyway;
+5. save the XCF (option, on by default) and update the parasite. Blender
+   is told first because saving a big XCF takes a while (the end-to-end
+   test found Blender's poller winning the race when the XCF came
+   first).
 
 ### Dilation (seam bleed)
 
@@ -308,6 +311,33 @@ Blender export, headless GIMP build and send, headless Blender reload
 with pixel checks, an end-to-end run where the resident listener in
 gimp-console and a headless Blender talk over the socket, and the
 resident listener in a real GIMP on Broadway when Chrome is there.
+
+## Found while building it
+
+- GIMP has no call that lists displays, so an image that is already
+  open cannot be brought to the front; Edit in GIMP then only takes in
+  outside changes.
+- A GIMP started while another GIMP GUI runs hands over to it through
+  D-Bus and exits; the GUI test starts GIMP with `--new-instance`.
+- In Broadway, new windows appear partly off the page; the GUI test
+  moves them with the Broadway client's own `cmdMoveResizeSurface`.
+  Menus work by mouse and keyboard, but popups get no keys (the action
+  search and the dialog's Escape), so the test navigates menus with
+  the arrow keys and clicks Cancel.
+- Blender's float images give premultiplied values through
+  `image.pixels` (a 16-bit PNG with alpha 5000/65535 read back as
+  premultiplied); byte images give straight values. The exchange PNG
+  is only written from byte images, so this does not reach the files.
+- `ProcedureConfig.set_core_object_array` sets the drawables of an image
+  procedure from Python; `set_property` with a list fails.
+- Test isolation: Flatpak ignores `--env` for `XDG_CACHE_HOME` and
+  `XDG_DATA_HOME`, so Blender's .blend thumbnails and GIMP's recent-file
+  list went to the Flatpaks' own folders until the tests set them inside
+  the sandbox (`flatpak run --command=env ...`). And
+  `blender --command extension install-file --enable` saved preferences
+  into the real Blender profile although `BLENDER_USER_CONFIG` pointed
+  elsewhere; the tests install by unpacking the zip into a throwaway
+  repository folder instead.
 
 ## Not in the first version
 
