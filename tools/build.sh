@@ -7,7 +7,9 @@
 #
 # The extension is built by Blender itself (blender --command extension
 # build), the Flatpak org.blender.Blender unless BLENDER is set to a
-# Blender executable. Blender runs with a throwaway profile.
+# Blender executable. Blender runs with a throwaway profile, isolated
+# from your folders (tests/isolate.sh: HOME and the XDG folders in a
+# throwaway home).
 #
 # Copyright 2026 David
 # SPDX-License-Identifier: GPL-3.0-or-later
@@ -20,20 +22,19 @@ version=$(sed -n 's/^version = "\(.*\)"$/\1/p' "$src/blender/gimp_link/blender_m
 rm -rf "$tmp"
 mkdir -p "$dist" "$tmp/config" "$tmp/scripts"
 rm -f "$dist/gimp_link-$version.zip"
+# shellcheck source=SCRIPTDIR/../tests/isolate.sh
+. "$src/tests/isolate.sh"
 
+# every user folder throwaway
 if [ -n "$BLENDER" ]; then
-    BLENDER_USER_RESOURCES="$tmp/res" BLENDER_USER_CONFIG="$tmp/config" BLENDER_USER_SCRIPTS="$tmp/scripts" \
-      BLENDER_USER_EXTENSIONS="$tmp/ext" XDG_CACHE_HOME="$tmp/cache" \
-      "$BLENDER" --command extension build --source-dir "$src/blender/gimp_link" --output-dir "$dist"
+    where=--native blender=$BLENDER
 else
-    # every user folder throwaway; XDG_CACHE_HOME set inside the sandbox
-    # because Flatpak does not let --env change it
-    flatpak run --filesystem="$src" --env=BLENDER_USER_RESOURCES="$tmp/res" \
-      --env=BLENDER_USER_CONFIG="$tmp/config" --env=BLENDER_USER_SCRIPTS="$tmp/scripts" \
-      --env=BLENDER_USER_EXTENSIONS="$tmp/ext" \
-      --command=env org.blender.Blender XDG_CACHE_HOME="$tmp/cache" XDG_DATA_HOME="$tmp/data" \
-      blender --command extension build --source-dir "$src/blender/gimp_link" --output-dir "$dist"
+    where=--flatpak blender=blender
 fi
+gimp_run --app=org.blender.Blender "$where" --home="$tmp/home" --filesystem="$src" \
+  --env=BLENDER_USER_RESOURCES="$tmp/res" --env=BLENDER_USER_CONFIG="$tmp/config" \
+  --env=BLENDER_USER_SCRIPTS="$tmp/scripts" --env=BLENDER_USER_EXTENSIONS="$tmp/ext" -- \
+  "$blender" --command extension build --source-dir "$src/blender/gimp_link" --output-dir "$dist"
 
 python3 - "$src" "$dist" "$version" <<'EOF'
 import os, sys, zipfile

@@ -139,19 +139,20 @@ try:
                                "about:blank"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     log = open(os.path.join(out, "gimp.log"), "w")
     # broadwayd first, then (after Chrome shows the page) GIMP
+    # isolated from the user's folders by gimp-run.sh: HOME and the XDG
+    # folders in a throwaway home (no recent-file entries, thumbnails or
+    # GIO metadata in GIMP's own folders)
     gimp = subprocess.Popen([
-        "flatpak", "run", "--filesystem=%s" % src,
+        os.path.join(devtools, "gimp-run.sh"), "--flatpak", "--home=%s" % os.path.join(out, "home"),
+        "--filesystem=%s" % src,
         "--env=GDK_BACKEND=broadway", "--env=BROADWAY_DISPLAY=%s" % display,
         "--env=GIMP3_DIRECTORY=%s" % profile,
         "--env=GIMP_BLENDER_LINK_DIR=%s" % linkdir, "--env=GIMP_BLENDER_LINK_PORT=%d" % port,
         "--env=GIMP_BLENDER_LINK_DEBUG=1",
-        "--command=sh", "org.gimp.GIMP", "-c",
-        # XDG folders set in the sandbox (Flatpak ignores --env for them):
-        # no recent-file entries or thumbnails in GIMP's own folders
-        "export XDG_DATA_HOME='%s' XDG_CACHE_HOME='%s'; "
+        "--", "sh", "-c",
         "broadwayd --port %d %s & bw=$!; trap 'kill $bw' EXIT; sleep 5; "
         "gimp-3.2 --new-instance --no-splash --no-fonts"
-        % (os.path.join(out, "xdg", "data"), os.path.join(out, "xdg", "cache"), broadway, display)],
+        % (broadway, display)],
         stdout=log, stderr=subprocess.STDOUT)
     time.sleep(2.5)
     rc, text = cdp(view, "nav:http://127.0.0.1:%d/" % broadway, "wait:500")

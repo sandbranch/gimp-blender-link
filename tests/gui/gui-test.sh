@@ -6,9 +6,11 @@
 #   tests/gui/gui-test.sh
 #
 # Skips (exit 0) without Chrome or node 22. Throwaway GIMP profile,
-# XDG data and cache folders (no recent-file entries or thumbnails in
-# the Flatpak's own folders), link folder and port; stops only the GIMP
-# and Chrome it started.
+# link folder and port; GIMP and Blender run isolated from your folders
+# (gimp-plugin-devtools/gimp-run.sh: HOME and the XDG folders in a
+# throwaway home, so no recent-file entries, thumbnails or GIO metadata
+# in the Flatpaks' own folders); stops only the GIMP and Chrome it
+# started.
 # Needs ../gimp-plugin-devtools (or GIMP_PLUGIN_DEVTOOLS) for cdp.mjs.
 #
 # Copyright 2026 David
@@ -24,6 +26,8 @@ command -v google-chrome >/dev/null || command -v chromium >/dev/null ||
 node -e 'process.exit(typeof WebSocket === "undefined" ? 1 : 0)' 2>/dev/null ||
   { echo "GUI SKIP: needs node 22 or later"; exit 0; }
 [ -f "$devtools/gui/cdp.mjs" ] || { echo "GUI SKIP: no $devtools/gui/cdp.mjs"; exit 0; }
+# shellcheck source=SCRIPTDIR/../isolate.sh
+. "$tests/isolate.sh"
 
 rm -rf "$out"
 mkdir -p "$out/work" "$out/blender/config" "$out/blender/scripts"
@@ -46,12 +50,12 @@ grep -q show-welcome-dialog "$profile/gimprc" 2>/dev/null ||
 
 port=$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
 b=$out/blender
-timeout 300 flatpak run --filesystem="$src" \
+gimp_run --timeout=300 --app="${GBL_BLENDER_APP:-org.blender.Blender}" --flatpak \
+  --home="$b/home" --filesystem="$src" \
   --env=BLENDER_USER_RESOURCES="$b/res" --env=BLENDER_USER_CONFIG="$b/config" \
   --env=BLENDER_USER_SCRIPTS="$b/scripts" --env=BLENDER_USER_EXTENSIONS="$b/ext" \
   --env=GIMP_BLENDER_LINK_DIR="$out/linkdir" --env=GIMP_BLENDER_LINK_PORT="$port" \
-  --command=env "${GBL_BLENDER_APP:-org.blender.Blender}" XDG_CACHE_HOME="$b/cache" XDG_DATA_HOME="$b/data" \
-  blender -b --factory-startup \
+  -- blender -b --factory-startup \
   --python "$tests/blender_export.py" -- "$out/work" >"$out/blender.log" 2>&1
 grep -q "^BLENDER EXPORT failures: 0$" "$out/blender.log" ||
   { echo "FAIL GUI: the Blender export for the GUI test failed, see $out/blender.log"; echo "GUI failures: 1"; exit 1; }

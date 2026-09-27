@@ -14,11 +14,15 @@
 # Blender and GIMP are the Flatpaks org.blender.Blender and
 # org.gimp.GIMP (GBL_BLENDER_APP, GBL_GIMP_APP to change). They run
 # with throwaway profiles under tests/output (BLENDER_USER_CONFIG,
-# BLENDER_USER_SCRIPTS, GIMP3_DIRECTORY, and XDG_DATA_HOME and
-# XDG_CACHE_HOME so that no thumbnails or recent-file entries land in
-# the Flatpaks' own folders) and a throwaway link folder and
-# port (GIMP_BLENDER_LINK_DIR, GIMP_BLENDER_LINK_PORT): your own
-# Blender, GIMP and their add-ons and plug-ins are not used or changed.
+# BLENDER_USER_SCRIPTS, GIMP3_DIRECTORY) and a throwaway link folder and
+# port (GIMP_BLENDER_LINK_DIR, GIMP_BLENDER_LINK_PORT), and isolated from
+# your own folders (tests/isolate.sh, with gimp-plugin-devtools/gimp-run.sh):
+# HOME and the XDG folders inside each Flatpak point into a throwaway
+# home, so that no thumbnails, recent-file entries or GIO metadata land
+# in the Flatpaks' own folders. Your own Blender, GIMP and their add-ons
+# and plug-ins are not used or changed: before and after, it lists your
+# folders of GIMP, Blender and the other apps
+# (gimp-plugin-devtools/snapshot.sh) and fails if anything there changed.
 #
 # Prints PASS or FAIL for each case; exits non-zero if any case fails.
 #
@@ -31,6 +35,11 @@ run=$out/run
 blender_app=${GBL_BLENDER_APP:-org.blender.Blender}
 gimp_app=${GBL_GIMP_APP:-org.gimp.GIMP}
 status=0
+
+# shellcheck source=SCRIPTDIR/isolate.sh
+. "$here/isolate.sh"
+mkdir -p "$out"
+snapshot_take "$out/snapshot-before.txt"
 
 rm -rf "$run"
 mkdir -p "$run/blender/config" "$run/blender/scripts" "$run/tmp" "$out/profile-console"
@@ -49,21 +58,19 @@ report () {
 }
 
 # Blender with every user folder under the throwaway folder $1
-# (BLENDER_USER_*, and XDG_CACHE_HOME and XDG_DATA_HOME, which Flatpak
-# does not let --env change, so they are set inside the sandbox); link
-# folder $2, port $3; the rest are Blender's arguments
+# (BLENDER_USER_*, and HOME and the XDG folders in $1/home); link folder
+# $2, port $3; the rest are Blender's arguments
 blender_in () {
     home=$1
     linkdir=$2
     port=$3
     shift 3
-    timeout 600 flatpak run --filesystem="$src" \
+    gimp_run --timeout=600 --app="$blender_app" --flatpak --home="$home/home" --filesystem="$src" \
       --env=BLENDER_USER_RESOURCES="$home/res" --env=BLENDER_USER_CONFIG="$home/config" \
       --env=BLENDER_USER_SCRIPTS="$home/scripts" --env=BLENDER_USER_EXTENSIONS="$home/ext" \
       --env=GIMP_BLENDER_LINK_DIR="$linkdir" --env=GIMP_BLENDER_LINK_PORT="$port" \
       --env=TEST_EXPORTED="$run/e2e/exported" --env=TEST_DONE="$run/e2e/done" \
-      --env=GBL_THROWAWAY="$home" \
-      --command=env "$blender_app" XDG_CACHE_HOME="$home/cache" XDG_DATA_HOME="$home/data" \
+      --env=GBL_THROWAWAY="$home" -- \
       blender "$@"
 }
 
@@ -71,16 +78,17 @@ blender () {
     blender_in "$run/blender" "$1" "$2" -b --factory-startup --python "$3" -- "$4"
 }
 
-# gimp-console with the profile $1 and its XDG folders next to it
+# gimp-console with the profile $1 and a throwaway home next to it
 gimp_console () {
     profile=$1
     linkdir=$2
     port=$3
     shift 3
-    timeout 600 flatpak run --filesystem="$src" --env=GIMP3_DIRECTORY="$profile" \
+    gimp_run --timeout=600 --app="$gimp_app" --flatpak --home="$profile-home" \
+      --filesystem="$src" --env=GIMP3_DIRECTORY="$profile" \
       --env=GIMP_BLENDER_LINK_DIR="$linkdir" --env=GIMP_BLENDER_LINK_PORT="$port" \
       --env=TEST_HERE="$here" --env=TEST_WORK="$run/work" --env=TEST_DONE="$run/e2e/done" \
-      --command=env "$gimp_app" XDG_DATA_HOME="$profile-xdg/data" XDG_CACHE_HOME="$profile-xdg/cache" \
+      ${GIMP_BLENDER_LINK_DEBUG:+--env=GIMP_BLENDER_LINK_DEBUG="$GIMP_BLENDER_LINK_DEBUG"} -- \
       gimp-console-3.2 --no-interface --no-data --no-fonts --batch-interpreter python-fu-eval "$@" --quit
 }
 
@@ -216,6 +224,10 @@ if [ "${GBL_GUI:-1}" != 0 ]; then
         [ $gui_status -eq 0 ] || status=1
     fi
 fi
+
+echo "== your folders of GIMP, Blender and the other apps"
+snapshot_check "$out/snapshot-before.txt" >"$run/snapshot.log" || status=1
+cat "$run/snapshot.log"
 
 pass=$(cat "$run"/*.log | grep -c "^PASS")
 fail=$(cat "$run"/*.log | grep -c "^FAIL")
