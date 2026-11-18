@@ -183,6 +183,18 @@ Blender.
   path (each Flatpak has its own `XDG_DATA_HOME`, so that variable
   cannot be used). `GIMP_BLENDER_LINK_DIR` changes it for both apps.
 
+## Native and snap notes
+
+- Blender's snap from the Blender Foundation (`snap install blender
+  --classic`) is not sandboxed, so it behaves like a native Blender:
+  its settings and extensions live in `~/.config/blender/<version>/`,
+  and it can start GIMP directly.
+- A native GIMP 3 (from a distribution package or a PPA) reads the
+  same `~/.config/GIMP/3.2/plug-ins/` folder as the GIMP Flatpak, so
+  the plug-in needs no second install.
+- With both native, set "Start GIMP with" to `gimp`. Nothing else to
+  set up: both apps see the same home folder, `/tmp` and network.
+
 ## Settings
 
 - Blender: Edit > Preferences > Add-ons > GIMP Link: exchange folder,
