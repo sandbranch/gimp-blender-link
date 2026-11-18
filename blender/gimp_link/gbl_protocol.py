@@ -37,9 +37,9 @@ class ProtocolError(Exception):
 def link_dir():
     """The folder both apps use to find each other.
 
-    A literal path under the home folder: a Flatpak sets its own
-    XDG_DATA_HOME per app, so that variable would differ between the
-    Blender and the GIMP Flatpak. GIMP_BLENDER_LINK_DIR overrides it."""
+    A literal path under the home folder: Blender's Flatpak sets its
+    own XDG_DATA_HOME, so that variable would differ between Blender
+    and GIMP. GIMP_BLENDER_LINK_DIR overrides it."""
     env = os.environ.get("GIMP_BLENDER_LINK_DIR")
     if env:
         return env
@@ -60,7 +60,8 @@ def gimp_port():
 
 
 def is_temporary_path(path):
-    """True for paths the other Flatpak may not see (a private /tmp)."""
+    """True for paths the other app may not see (Blender's Flatpak has
+    a private /tmp)."""
     p = os.path.realpath(path)
     return p == "/tmp" or p.startswith("/tmp/") or p.startswith("/var/tmp/")
 

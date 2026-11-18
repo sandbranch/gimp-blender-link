@@ -51,9 +51,9 @@ github.com/heisenshark/blender-krita-link-plugin, last commit 2026-09-08.
 - **Sandboxes.** Shared memory needs `/dev/shm` shared between the two
   apps. Issue #23 (open): with both Flatpaks the user had to copy files
   into `/var/lib/flatpak/app/org.kde.krita/...` and run
-  `flatpak override` for network and IPC. On this machine the user's
-  Blender Flatpak has a `devices=shm` override, and `/dev/shm` is not
-  shared between the Blender and GIMP Flatpaks.
+  `flatpak override` for network and IPC. On this machine (2026-09) the
+  user's Blender Flatpak had a `devices=shm` override, and `/dev/shm`
+  was not shared between the Blender and GIMP Flatpaks.
 - **Complaints.** #25 and #20 (Krita crashes on connect, unlink or
   disconnect), #21 (disconnects, the port only shown in a terminal),
   #14 (disabling the add-on crashes Blender because timers stay
@@ -243,9 +243,10 @@ only, no code.
 - **No shared memory.** Both Krita links depend on POSIX shared memory,
   which breaks under Flatpak (Blender Krita Link #23, Blender Layer #2
   and #9) and leaks segments after a crash (Blender Layer #1). Here
-  `/dev/shm` is not shared between the Blender and GIMP Flatpaks. GIMP
-  Link moves pixels only through files under `$HOME` (both Flatpaks
-  have `filesystems=host`) and uses the socket only for short messages.
+  (2026-09) `/dev/shm` was not shared between the Blender and GIMP
+  Flatpaks. GIMP Link moves pixels only through files under `$HOME`
+  (which a Flatpak Blender sees too: `filesystems=host`) and uses the
+  socket only for short messages.
 - **No pickle, a token instead of a fixed password.** Blender Layer
   unpickles socket data and Blender Krita Link uses pickling
   `multiprocessing.connection` with a fixed authkey. GIMP Link speaks

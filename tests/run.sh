@@ -11,15 +11,16 @@
 # run of the resident listener in gimp-console with a headless Blender,
 # and the resident listener in a real GIMP on Broadway (tests/gui).
 #
-# Blender and GIMP are the Flatpaks org.blender.Blender and
-# org.gimp.GIMP (GBL_BLENDER_APP, GBL_GIMP_APP to change). They run
+# GIMP is the native GIMP 3. Blender is the Flatpak org.blender.Blender
+# if that is installed (GBL_BLENDER_APP: another Flatpak ID), otherwise
+# the native (or snap) blender on the PATH. Both run
 # with throwaway profiles under tests/output (BLENDER_USER_CONFIG,
 # BLENDER_USER_SCRIPTS, GIMP3_DIRECTORY) and a throwaway link folder and
 # port (GIMP_BLENDER_LINK_DIR, GIMP_BLENDER_LINK_PORT), and isolated from
 # your own folders (tests/isolate.sh, with gimp-devtools/gimp-run.sh):
-# HOME and the XDG folders inside each Flatpak point into a throwaway
-# home, so that no thumbnails, recent-file entries or GIO metadata land
-# in the Flatpaks' own folders. Your own Blender, GIMP and their add-ons
+# HOME and the XDG folders (inside a Flatpak too) point into a
+# throwaway home, so that no thumbnails, recent-file entries or GIO
+# metadata land in your folders. Your own Blender, GIMP and their add-ons
 # and plug-ins are not used or changed: before and after, it lists your
 # folders of GIMP, Blender and the other apps
 # (gimp-devtools/snapshot.sh) and fails if anything there changed.
@@ -33,7 +34,6 @@ src=$(dirname "$here")
 out=$here/output
 run=$out/run
 blender_app=${GBL_BLENDER_APP:-org.blender.Blender}
-gimp_app=${GBL_GIMP_APP:-org.gimp.GIMP}
 status=0
 
 # shellcheck source=SCRIPTDIR/isolate.sh
@@ -65,7 +65,7 @@ blender_in () {
     linkdir=$2
     port=$3
     shift 3
-    gimp_run --timeout=600 --app="$blender_app" --flatpak --home="$home/home" --filesystem="$src" \
+    gimp_run --timeout=600 --app="$blender_app" --home="$home/home" --filesystem="$src" \
       --env=BLENDER_USER_RESOURCES="$home/res" --env=BLENDER_USER_CONFIG="$home/config" \
       --env=BLENDER_USER_SCRIPTS="$home/scripts" --env=BLENDER_USER_EXTENSIONS="$home/ext" \
       --env=GIMP_BLENDER_LINK_DIR="$linkdir" --env=GIMP_BLENDER_LINK_PORT="$port" \
@@ -84,8 +84,7 @@ gimp_console () {
     linkdir=$2
     port=$3
     shift 3
-    gimp_run --timeout=600 --app="$gimp_app" --flatpak --home="$profile-home" \
-      --filesystem="$src" --env=GIMP3_DIRECTORY="$profile" \
+    gimp_run --timeout=600 --home="$profile-home" --env=GIMP3_DIRECTORY="$profile" \
       --env=GIMP_BLENDER_LINK_DIR="$linkdir" --env=GIMP_BLENDER_LINK_PORT="$port" \
       --env=TEST_HERE="$here" --env=TEST_WORK="$run/work" --env=TEST_DONE="$run/e2e/done" \
       ${GIMP_BLENDER_LINK_DEBUG:+--env=GIMP_BLENDER_LINK_DEBUG="$GIMP_BLENDER_LINK_DEBUG"} -- \

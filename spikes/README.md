@@ -12,5 +12,5 @@ results are in [../docs/design.md](../docs/design.md).
 - `gimp-link-spike/`: a resident plug-in (a PERSISTENT procedure with no
   arguments, started by GIMP) serving a `Gio.SocketService`, tested in
   gimp-console and in the GIMP GUI on Broadway with `client.py`.
-- `killgimp.sh`: stops only the GIMP Flatpak instances whose command
-  line contains a given string.
+- `killgimp.sh`: stops only the GIMP processes whose command line
+  contains a given string.

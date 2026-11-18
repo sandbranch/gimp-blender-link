@@ -67,7 +67,7 @@ class GimpLinkPreferences(bpy.types.AddonPreferences):
     gimp_command: bpy.props.StringProperty(
         name="Start GIMP with",
         description="Command that starts GIMP when it is not running (empty: start GIMP "
-        "yourself). See the README for Flatpak")
+        "yourself). See the README for Blender's Flatpak")
 
     def draw(self, context):
         col = self.layout.column()

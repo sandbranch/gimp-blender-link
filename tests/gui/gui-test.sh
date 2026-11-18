@@ -1,5 +1,5 @@
 #!/bin/sh
-# The GIMP Link listener in a real GIMP (Flatpak GUI on Broadway),
+# The GIMP Link listener in a real GIMP (native, GUI on Broadway),
 # looked at with a headless Chrome. Makes the manifests with a headless
 # Blender export first. Screenshots in tests/output/gui/.
 #
@@ -9,8 +9,9 @@
 # link folder and port; GIMP and Blender run isolated from your folders
 # (gimp-devtools/gimp-run.sh: HOME and the XDG folders in a
 # throwaway home, so no recent-file entries, thumbnails or GIO metadata
-# in the Flatpaks' own folders); stops only the GIMP and Chrome it
-# started.
+# in your folders); stops only the GIMP and Chrome it started. Blender
+# is the Flatpak org.blender.Blender if that is installed, otherwise the
+# native (or snap) blender (GBL_BLENDER_APP: another Flatpak ID).
 # Needs ../gimp-devtools (or GIMP_PLUGIN_DEVTOOLS) for cdp.mjs.
 #
 # Copyright 2026 David
@@ -50,7 +51,7 @@ grep -q show-welcome-dialog "$profile/gimprc" 2>/dev/null ||
 
 port=$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])')
 b=$out/blender
-gimp_run --timeout=300 --app="${GBL_BLENDER_APP:-org.blender.Blender}" --flatpak \
+gimp_run --timeout=300 --app="${GBL_BLENDER_APP:-org.blender.Blender}" \
   --home="$b/home" --filesystem="$src" \
   --env=BLENDER_USER_RESOURCES="$b/res" --env=BLENDER_USER_CONFIG="$b/config" \
   --env=BLENDER_USER_SCRIPTS="$b/scripts" --env=BLENDER_USER_EXTENSIONS="$b/ext" \

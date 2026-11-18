@@ -1,6 +1,6 @@
 # End to end, headless: this Blender and the resident listener of the
-# GIMP Link plug-in in a gimp-console started by tests/run.sh, both
-# Flatpaks, talking over 127.0.0.1 and the link folder.
+# GIMP Link plug-in in a gimp-console started by tests/run.sh, talking
+# over 127.0.0.1 and the link folder.
 #
 # 1. Edit in GIMP while GIMP is not running: a pending request.
 #    (run.sh starts GIMP when the file TEST_EXPORTED appears.)

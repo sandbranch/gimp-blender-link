@@ -1,4 +1,4 @@
-# The resident listener in a real GIMP (the Flatpak, GUI on a Broadway
+# The resident listener in a real GIMP (native, GUI on a Broadway
 # display, looked at through a headless Chrome with
 # gimp-devtools/gui/cdp.mjs). This script plays Blender: a
 # stand-in listener gets GIMP's reload messages.
@@ -82,20 +82,18 @@ view = "size:1400,900"
 
 
 def our_gimp_instances():
-    """Flatpak instances of GIMP whose command line names our profile."""
-    r = subprocess.run(["flatpak", "ps", "--columns=instance,child-pid,application"],
-                       capture_output=True, text=True)
+    """The GIMP processes that run with our profile (GIMP3_DIRECTORY in
+    their environment)."""
+    r = subprocess.run(["pgrep", "-x", "gimp-3.2"], capture_output=True, text=True)
+    mine = ("GIMP3_DIRECTORY=%s" % profile).encode()
     found = []
-    for line in r.stdout.splitlines():
-        parts = line.split()
-        if len(parts) != 3 or parts[2] != "org.gimp.GIMP":
-            continue
+    for pid in r.stdout.split():
         try:
-            cmd = open("/proc/%s/cmdline" % parts[1], "rb").read().replace(b"\0", b" ").decode()
+            environ = open("/proc/%s/environ" % pid, "rb").read().split(b"\0")
         except OSError:
             continue
-        if profile in cmd or ("--port %d" % broadway) in cmd:
-            found.append(parts[0])
+        if mine in environ:
+            found.append(pid)
     return found
 
 
@@ -106,8 +104,10 @@ def cleanup():
             cdp("nav:about:blank", timeout=10)
         except Exception:
             pass
-    for inst in our_gimp_instances():
-        subprocess.run(["flatpak", "kill", inst])
+    for pid in our_gimp_instances():
+        # its plug-ins first (the resident listener), then GIMP
+        subprocess.run(["pkill", "-P", pid])
+        subprocess.run(["kill", pid])
     if gimp is not None:
         try:
             gimp.wait(10)
@@ -143,8 +143,7 @@ try:
     # folders in a throwaway home (no recent-file entries, thumbnails or
     # GIO metadata in GIMP's own folders)
     gimp = subprocess.Popen([
-        os.path.join(devtools, "gimp-run.sh"), "--flatpak", "--home=%s" % os.path.join(out, "home"),
-        "--filesystem=%s" % src,
+        os.path.join(devtools, "gimp-run.sh"), "--home=%s" % os.path.join(out, "home"),
         "--env=GDK_BACKEND=broadway", "--env=BROADWAY_DISPLAY=%s" % display,
         "--env=GIMP3_DIRECTORY=%s" % profile,
         "--env=GIMP_BLENDER_LINK_DIR=%s" % linkdir, "--env=GIMP_BLENDER_LINK_PORT=%d" % port,

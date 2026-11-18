@@ -17,10 +17,11 @@ Two parts, both needed:
 
 - a Blender add-on (Blender 4.2 and later as an extension, also as a
   legacy add-on), tested with Blender 5.2;
-- a GIMP 3 plug-in in Python, tested with GIMP 3.2.6.
+- a GIMP 3 plug-in in Python, for the native GIMP 3 (tested with GIMP
+  3.2.6 and 3.2.8).
 
-Both work as Flatpaks, the way they are installed on Linux from
-Flathub, without any Flatpak overrides.
+Blender can be native, the snap or the Flatpak from Flathub, without
+any Flatpak overrides.
 
 ## What you get
 
@@ -69,7 +70,7 @@ them from a release.
   `gimp_link-<version>-legacy-addon.zip`, and enable "GIMP Link". Or
   unpack it into your scripts folder's `addons/`.
 
-The Flatpak Blender needs nothing more.
+A native, snap or Flatpak Blender needs nothing more.
 
 ### GIMP
 
@@ -77,16 +78,15 @@ Unpack `gimp-blender-link-<version>-gimp.zip` into GIMP's plug-in folder,
 so that you have `plug-ins/gimp-blender-link/gimp-blender-link.py`, and
 restart GIMP:
 
-- Linux, native or **Flatpak**: `~/.config/GIMP/3.2/plug-ins/` (the
-  GIMP Flatpak uses this same folder: it has access to
-  `~/.config/GIMP`). On Linux and macOS the `.py` file must be
-  executable (`chmod +x`), which the zip keeps.
+- Linux: `~/.config/GIMP/3.2/plug-ins/`. On Linux and macOS the `.py`
+  file must be executable (`chmod +x`), which the zip keeps.
 - Windows: `%APPDATA%\GIMP\3.2\plug-ins\`
 - macOS: `~/Library/Application Support/GIMP/3.2/plug-ins/`
 
 (Windows and macOS were not tried.) GIMP needs its Python support; the
-Flatpak has it (checked); for other builds, Filters > Development >
-Python-Fu shows whether yours does.
+`gimp` package of Debian and Ubuntu has it (checked, `sudo apt install
+gimp`); for other builds, Filters > Development > Python-Fu shows
+whether yours does.
 
 ## Use
 
@@ -164,36 +164,29 @@ Blender. Only let one program write a texture at a time: the last write
 wins, and GIMP Link's conflict check only protects unsaved paint inside
 Blender.
 
-## Flatpak notes
-
-- Nothing to set up: both Flatpaks share the network (127.0.0.1) and
-  the home folder.
-- GIMP cannot be started from inside Blender's Flatpak without a
-  Flatpak override that lets Blender run any program on the host:
-
-      flatpak override --user --talk-name=org.freedesktop.Flatpak org.blender.Blender
-
-  and then, in the add-on's preferences, "Start GIMP with":
-  `flatpak-spawn --host flatpak run org.gimp.GIMP`. This was not tested
-  (the development rules here forbid changing overrides), and it is not
-  needed: start GIMP yourself, and it picks up Blender's request. With
-  a native Blender, `flatpak run org.gimp.GIMP` or `gimp` works as the
-  command without any override.
-- The link folder is `~/.local/share/gimp-blender-link/` as a literal
-  path (each Flatpak has its own `XDG_DATA_HOME`, so that variable
-  cannot be used). `GIMP_BLENDER_LINK_DIR` changes it for both apps.
-
-## Native and snap notes
+## Native, snap and Flatpak Blender
 
 - Blender's snap from the Blender Foundation (`snap install blender
   --classic`) is not sandboxed, so it behaves like a native Blender:
   its settings and extensions live in `~/.config/blender/<version>/`,
   and it can start GIMP directly.
-- A native GIMP 3 (from a distribution package or a PPA) reads the
-  same `~/.config/GIMP/3.2/plug-ins/` folder as the GIMP Flatpak, so
-  the plug-in needs no second install.
-- With both native, set "Start GIMP with" to `gimp`. Nothing else to
-  set up: both apps see the same home folder, `/tmp` and network.
+- With a native or snap Blender, set "Start GIMP with" to `gimp`.
+  Nothing else to set up: both apps see the same home folder, `/tmp`
+  and network.
+- Blender's Flatpak shares the network (127.0.0.1) and the home folder
+  with GIMP, so nothing needs setting up either, but it cannot start
+  GIMP without a Flatpak override that lets Blender run any program on
+  the host:
+
+      flatpak override --user --talk-name=org.freedesktop.Flatpak org.blender.Blender
+
+  and then, in the add-on's preferences, "Start GIMP with":
+  `flatpak-spawn --host gimp`. This was not tested (the development
+  rules here forbid changing overrides), and it is not needed: start
+  GIMP yourself, and it picks up Blender's request.
+- The link folder is `~/.local/share/gimp-blender-link/` as a literal
+  path: Blender's Flatpak has its own `XDG_DATA_HOME`, so that variable
+  cannot be used. `GIMP_BLENDER_LINK_DIR` changes it for both apps.
 
 ## Settings
 
@@ -258,8 +251,9 @@ sends the texture to GIMP to edit there); it has not been tried here.
 - Only 127.0.0.1: no editing across machines.
 - Not done: the "better Quick Edit" (paint the current 3D view in GIMP
   and project it back).
-- Tested on Linux with the Blender 5.2 and GIMP 3.2.6 Flatpaks. Windows
-  and macOS paths are handled but were never run.
+- Tested on Linux with the Blender 5.2 snap and the native GIMP 3.2.8
+  (2026-11; before that, 2026-09, with the Blender 5.2 and GIMP 3.2.6
+  Flatpaks). Windows and macOS paths are handled but were never run.
 
 ## Tests
 

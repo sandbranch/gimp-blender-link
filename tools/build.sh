@@ -6,8 +6,9 @@
 #   gimp-blender-link-<version>-gimp.zip    the GIMP 3 plug-in folder
 #
 # The extension is built by Blender itself (blender --command extension
-# build), the Flatpak org.blender.Blender unless BLENDER is set to a
-# Blender executable. Blender runs with a throwaway profile, isolated
+# build): BLENDER if that is set to a Blender executable, else the
+# Flatpak org.blender.Blender if it is installed, else the native (or
+# snap) blender on the PATH. Blender runs with a throwaway profile, isolated
 # from your folders (tests/isolate.sh: HOME and the XDG folders in a
 # throwaway home).
 #
@@ -26,12 +27,10 @@ rm -f "$dist/gimp_link-$version.zip"
 . "$src/tests/isolate.sh"
 
 # every user folder throwaway
-if [ -n "$BLENDER" ]; then
-    where=--native blender=$BLENDER
-else
-    where=--flatpak blender=blender
-fi
-gimp_run --app=org.blender.Blender "$where" --home="$tmp/home" --filesystem="$src" \
+where= blender=blender
+[ -z "$BLENDER" ] || where=--native blender=$BLENDER
+# shellcheck disable=SC2086 # $where is one option or none
+gimp_run --app=org.blender.Blender $where --home="$tmp/home" --filesystem="$src" \
   --env=BLENDER_USER_RESOURCES="$tmp/res" --env=BLENDER_USER_CONFIG="$tmp/config" \
   --env=BLENDER_USER_SCRIPTS="$tmp/scripts" --env=BLENDER_USER_EXTENSIONS="$tmp/ext" -- \
   "$blender" --command extension build --source-dir "$src/blender/gimp_link" --output-dir "$dist"

@@ -49,8 +49,8 @@ tested by themselves; a test checks that both copies are identical.
 
 **Link folder** (discovery; both sides agree on it without talking):
 `~/.local/share/gimp-blender-link/` on Linux, as a literal path under
-`$HOME`, not `$XDG_DATA_HOME`, because a Flatpak changes that variable
-per app. macOS: `~/Library/Application Support/gimp-blender-link/`;
+`$HOME`, not `$XDG_DATA_HOME`, because Blender's Flatpak changes that
+variable. macOS: `~/Library/Application Support/gimp-blender-link/`;
 Windows: `%APPDATA%\gimp-blender-link\`. `GIMP_BLENDER_LINK_DIR`
 overrides it for both (the tests use this).
 
@@ -98,8 +98,9 @@ private `/tmp`. It holds:
 }
 ```
 
-All paths are absolute host paths. Both Flatpaks have
-`filesystems=host`, so a path under `$HOME` is the same in both.
+All paths are absolute host paths. Blender's Flatpak has
+`filesystems=host`, so a path under `$HOME` is the same for it and the
+native GIMP.
 
 ## Which file GIMP edits
 
@@ -148,8 +149,9 @@ gimp-console. Its run function:
 3. calls `persistent_enable()` and runs a `GLib.MainLoop`. The socket
    callbacks run on that loop and may call the PDB.
 
-Spike (`spikes/gimp-link-spike/`, GIMP 3.2.6 Flatpak on Broadway, a real
-GUI, and in gimp-console):
+Spike (2026-09, `spikes/gimp-link-spike/`, GIMP 3.2.6 Flatpak on
+Broadway, a real GUI, and in gimp-console; the native GIMP 3.2.8 passes
+the same tests since 2026-11):
 
 - GIMP started the extension by itself; the socket answered.
 - A socket request created an image and a display (`Gimp.Display.new`)
@@ -273,8 +275,8 @@ islands nothing changes, outside the N px border nothing changes.
   itself) and asks GIMP to reload the island paths.
 - **Starting GIMP**: not by default. If GIMP is not listening, Blender
   writes the pending request and says to start GIMP. Optionally a
-  command in the preferences is run (e.g. `gimp` natively, or
-  `flatpak-spawn --host flatpak run org.gimp.GIMP` from Flatpak Blender,
+  command in the preferences is run (e.g. `gimp` from a native or snap
+  Blender, or `flatpak-spawn --host gimp` from Flatpak Blender,
   which needs `flatpak override --user --talk-name=org.freedesktop.Flatpak
   org.blender.Blender`; that override lets Blender run any program on
   the host, and this path was not tested here because the development
@@ -330,10 +332,12 @@ resident listener in a real GIMP on Broadway when Chrome is there.
   is only written from byte images, so this does not reach the files.
 - `ProcedureConfig.set_core_object_array` sets the drawables of an image
   procedure from Python; `set_property` with a list fails.
-- Test isolation: Flatpak ignores `--env` for `XDG_CACHE_HOME` and
-  `XDG_DATA_HOME`, so Blender's .blend thumbnails and GIMP's recent-file
-  list went to the Flatpaks' own folders until the tests set them inside
-  the sandbox (`flatpak run --command=env ...`). And
+- Test isolation (2026-09, with both as Flatpaks): Flatpak ignores
+  `--env` for `XDG_CACHE_HOME` and `XDG_DATA_HOME`, so Blender's .blend
+  thumbnails and GIMP's recent-file list went to the Flatpaks' own
+  folders until the tests set them inside the sandbox (`flatpak run
+  --command=env ...`; gimp-devtools/gimp-run.sh still does this for a
+  Flatpak Blender). And
   `blender --command extension install-file --enable` saved preferences
   into the real Blender profile although `BLENDER_USER_CONFIG` pointed
   elsewhere; the tests install by unpacking the zip into a throwaway

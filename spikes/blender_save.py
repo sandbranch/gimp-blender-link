@@ -1,6 +1,6 @@
 # Spike: what Image.save() writes from headless Blender 5.2, and what
 # a filepath change plus reload does to the pixels and the colour space.
-# Run: flatpak run org.blender.Blender -b --factory-startup --python spikes/blender_save.py -- OUTDIR
+# Run: blender -b --factory-startup --python spikes/blender_save.py -- OUTDIR
 import bpy, sys, os, struct, zlib
 
 out = sys.argv[sys.argv.index("--") + 1]
