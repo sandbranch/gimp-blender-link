@@ -55,6 +55,24 @@ gimp_run () {
     [ -n "$gr_home" ] || { echo "gimp_run: no GIMP_RUN_HOME" >&2; return 2; }
     mkdir -p "$gr_home" || return 2
     gr_home=$(CDPATH='' cd -- "$gr_home" && pwd) || return 2
+    # the same interface font as gimp-run.sh gives (DejaVu Sans for "Sans")
+    if [ ! -f "$gr_home/.config/fontconfig/fonts.conf" ]; then
+        mkdir -p "$gr_home/.config/fontconfig" &&
+          cat > "$gr_home/.config/fontconfig/fonts.conf" <<'FONTS'
+<?xml version="1.0"?>
+<!DOCTYPE fontconfig SYSTEM "urn:fontconfig:fonts.dtd">
+<fontconfig>
+  <match target="pattern">
+    <test name="family"><string>Sans</string></test>
+    <edit name="family" mode="assign" binding="strong"><string>DejaVu Sans</string></edit>
+  </match>
+  <match target="pattern">
+    <test name="family"><string>sans-serif</string></test>
+    <edit name="family" mode="prepend" binding="strong"><string>DejaVu Sans</string></edit>
+  </match>
+</fontconfig>
+FONTS
+    fi
     if [ "$gr_app" = org.gimp.GIMP ]; then
         gr_mode=native
     elif [ -z "$gr_mode" ]; then
